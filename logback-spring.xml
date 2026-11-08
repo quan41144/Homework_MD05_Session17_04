@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="storex-backend"/>
+    <springProperty scope="context" name="logstashHost" source="logging.logstash.host" defaultValue="logstash:5000"/>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+	
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${logstashHost}</destination>
+        
+        <keepAliveDuration>5 minutes</keepAliveDuration>
+        <connectionTimeout>5000</connectionTimeout>
+        <reconnectionDelay>3000</reconnectionDelay>
+        <writeTimeout>5000</writeTimeout>
+        
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeCallerData>false</includeCallerData>
+            <customFields>{"app_name":"${appName}"}</customFields>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_LOGSTASH" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOGSTASH" />
+        
+        <queueSize>10000</queueSize>
+        
+        <discardingThreshold>0</discardingThreshold>
+        
+        <neverBlock>true</neverBlock>
+        
+        <maxFlushTime>5000</maxFlushTime>
+		
+        <includeCallerData>false</includeCallerData>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_LOGSTASH" />
+    </root>
+
+</configuration>
